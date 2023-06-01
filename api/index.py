@@ -1,15 +1,22 @@
+import os
+import base64
+import hashlib
+import hmac
+from datetime import datetime
+
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
-import os
+from tools.mysql import MysqlPool
+from tools.settings import LINE_CHANNEL_SECRET, LINE_CHANNEL_ACCESS_TOKEN
 
-line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN",
-                                    "hHrCU8C+7NwOXvH3g+lWegunGf2qaNasMlC0UGVGvEVszBzPxHOyxH1aPAxY0ZEAnwJFWCMCOgoIj/DcCF"
-                                    "tjPz9PZ1TkvXQiWmhDYK8tUi4HEH4/S9Y+/NtFwbNVWJUQ75Z5evnx43hjB/PGSjkuHAdB04t89/1O/w1cDnyilFU="))
-line_handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET", "c45d5bae2d299477dbc65b81bb759b76"))
-working_status = os.getenv("DEFALUT_TALKING", default="true").lower() == "true"
+mysql_client = MysqlPool()
+
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+line_handler = WebhookHandler(LINE_CHANNEL_SECRET)
+working_status = os.getenv("DEFAULT_TALKING", default="true").lower() == "true"
 
 app = Flask(__name__)
 
@@ -22,9 +29,30 @@ def home():
 
 @app.route("/webhook", methods=['POST'])
 def callback():
+    # get request body as text
+    info = request.get_json()
+    print(f'info: {info}')
+    try:
+        text = info["events"][0]["message"]["text"]
+        print(f'text: {text}')
+        timestamp = int(info["events"][0]["timestamp"] / 1000)
+        date = datetime.strftime(datetime.fromtimestamp(timestamp), '%Y-%m-%d %H:%M:%S')
+        print(f'date: {date}')
+        user_id = info["events"][0]["source"]["userId"]
+        group_id = info["events"][0]["source"].get("groupId", "")
+        print(f'userId: {user_id}')
+        print(f'groupId: {group_id}')
+        if text:
+            value = (user_id, text, date, group_id)
+            print(value)
+            mysql_client.insert_one('''insert ignore into line_dialogue (user_id, message, date, group_id) values
+                        (%s, %s, %s, %s)
+            ''', value=value)
+    except Exception as e:
+        print(e)
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
-    # get request body as text
+
     body = request.get_data(as_text=True)
     app.logger.info("Request body: " + body)
     # handle webhook body
@@ -38,17 +66,20 @@ def callback():
 @line_handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     global working_status
+    print(f"event: {event}")
+    print(f"message: {event.message}")
+    print(f"working_status: {working_status}")
     if event.message.type != "text":
         return
 
-    if event.message.text == "說話":
+    if event.message.text == "你好":
         working_status = True
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="我可以說話囉，歡迎來跟我互動 ^_^ "))
+            TextSendMessage(text="您好，有什么可以帮助您的吗？ ^_^ "))
         return
 
-    if event.message.text == "閉嘴":
+    if event.message.text == "再见":
         working_status = False
         line_bot_api.reply_message(
             event.reply_token,
@@ -56,13 +87,11 @@ def handle_message(event):
         return
 
     if working_status:
-        # chatgpt.add_msg(f"HUMAN:{event.message.text}?\n")
-        # reply_msg = chatgpt.get_response().replace("AI:", "", 1)
-        # chatgpt.add_msg(f"AI:{reply_msg}\n")
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="test test"))
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run('0.0.0.0', port=8090)
+
