@@ -1,9 +1,8 @@
+import json
 import os
-import base64
-import hashlib
-import hmac
 from datetime import datetime
 
+from loguru import logger
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -31,25 +30,24 @@ def home():
 def callback():
     # get request body as text
     info = request.get_json()
-    print(f'info: {info}')
+    logger.info(f"info: {info}")
     try:
         text = info["events"][0]["message"]["text"]
-        print(f'text: {text}')
+        logger.info(f'text: {text}')
         timestamp = int(info["events"][0]["timestamp"] / 1000)
         date = datetime.strftime(datetime.fromtimestamp(timestamp), '%Y-%m-%d %H:%M:%S')
-        print(f'date: {date}')
+        logger.info(f'date: {date}')
         user_id = info["events"][0]["source"]["userId"]
         group_id = info["events"][0]["source"].get("groupId", "")
-        print(f'userId: {user_id}')
-        print(f'groupId: {group_id}')
+        logger.info(f'userId: {user_id}')
+        logger.info(f'groupId: {group_id}')
         if text:
             value = (user_id, text, date, group_id)
-            print(value)
             mysql_client.insert_one('''insert ignore into line_dialogue (user_id, message, date, group_id) values
                         (%s, %s, %s, %s)
             ''', value=value)
     except Exception as e:
-        print(e)
+        logger.info(e)
     # get X-Line-Signature header value
     signature = request.headers['X-Line-Signature']
 
@@ -65,10 +63,8 @@ def callback():
 
 @line_handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    logger.info(f"event: {event}")
     global working_status
-    print(f"event: {event}")
-    print(f"message: {event.message}")
-    print(f"working_status: {working_status}")
     if event.message.type != "text":
         return
 
@@ -92,6 +88,29 @@ def handle_message(event):
             TextSendMessage(text="test test"))
 
 
+def parse_data(data):
+    try:
+        for event in data['events']:
+            # ori_data = json.dumps(event, ensure_ascii=False)
+            text = event["message"]["text"]
+            logger.info(f'text: {text}')
+            timestamp = int(event["timestamp"] / 1000)
+            date = datetime.strftime(datetime.fromtimestamp(timestamp), '%Y-%m-%d %H:%M:%S')
+            logger.info(f'date: {date}')
+            user_id = event["source"]["userId"]
+            logger.info(f'userId: {user_id}')
+            group_id = event["source"].get("groupId", "")
+            logger.info(f'groupId: {group_id}')
+            value = [user_id, text, date, group_id]
+            mysql_client.insert_one('''insert ignore into line_dialogue (user_id, message, date, group_id) values
+                                    (%s, %s, %s, %s)
+                        ''', value=value)
+            logger.info(f"Success save {user_id}.")
+    except Exception as e:
+        logger.info(e)
+
+
 if __name__ == "__main__":
     app.run('0.0.0.0', port=8090)
+    # gunicron
 
