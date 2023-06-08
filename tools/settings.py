@@ -3,7 +3,7 @@
 CRAWLER_MYSQL_CONF = {
     'host': '127.0.0.1',
     'user': 'root',
-    'password': 'Z123.com',
+    'password': 'root',
     'db': 'data',
     'port': 3306
 }
