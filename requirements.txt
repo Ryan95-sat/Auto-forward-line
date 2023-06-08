@@ -4,3 +4,4 @@ PyMySQL~=1.0.3
 DBUtils~=3.0.3
 loguru~=0.7.0
 gunicorn
+tornado~=6.3.2
