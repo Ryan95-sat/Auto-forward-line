@@ -1,9 +1,10 @@
+import os
 
 # mysql config
 CRAWLER_MYSQL_CONF = {
     'host': '127.0.0.1',
-    'user': 'admin',
-    'password': '123456',
+    'user': os.getenv('USER', 'admin'),
+    'password': os.getenv('PASSWORD', '123456'),
     'db': 'data',
     'port': 3306
 }
