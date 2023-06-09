@@ -68,24 +68,31 @@ def handle_message(event):
     if event.message.type != "text":
         return
 
-    if event.message.text == "你好":
+    text = event.message.text
+    if text.startswith('@Fl Movie'):
         working_status = True
         line_bot_api.reply_message(
             event.reply_token,
             TextSendMessage(text="您好，有什么可以帮助您的吗？ ^_^ "))
         return
-
-    if event.message.text == "再见":
-        working_status = False
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="好的，我乖乖閉嘴 > <，如果想要我繼續說話，請跟我說 「說話」 > <"))
-        return
-
-    if working_status:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="test test"))
+    # if event.message.text == "你好":
+    #     working_status = True
+    #     line_bot_api.reply_message(
+    #         event.reply_token,
+    #         TextSendMessage(text="您好，有什么可以帮助您的吗？ ^_^ "))
+    #     return
+    #
+    # if event.message.text == "再见":
+    #     working_status = False
+    #     line_bot_api.reply_message(
+    #         event.reply_token,
+    #         TextSendMessage(text="好的，我乖乖閉嘴 > <，如果想要我繼續說話，請跟我說 「說話」 > <"))
+    #     return
+    #
+    # if working_status:
+    #     line_bot_api.reply_message(
+    #         event.reply_token,
+    #         TextSendMessage(text="test test"))
 
 
 def parse_data(data):

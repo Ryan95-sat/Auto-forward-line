@@ -2,8 +2,8 @@
 # mysql config
 CRAWLER_MYSQL_CONF = {
     'host': '127.0.0.1',
-    'user': 'root',
-    'password': 'root',
+    'user': 'admin',
+    'password': '123456',
     'db': 'data',
     'port': 3306
 }
