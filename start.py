@@ -11,7 +11,7 @@ def init_logger():
     log_dir = os.path.expanduser('logs')
     log_file = os.path.join(log_dir, 'auto_forward_log_{time}.log')
     if not os.path.exists(log_dir):
-        os.mkdir(log_file)
+        os.mkdir(log_dir)
     logger.add(log_file, rotation='10MB', compression='zip', retention="72h")
 
 
