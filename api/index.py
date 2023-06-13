@@ -8,6 +8,7 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
+from crawler.movie_crawl import crawl_msg
 from tools.mysql import MysqlPool
 from tools.settings import LINE_CHANNEL_SECRET, LINE_CHANNEL_ACCESS_TOKEN
 
@@ -71,28 +72,16 @@ def handle_message(event):
     text = event.message.text
     if text.startswith('@Fl Movie'):
         working_status = True
+        region = "US"
+        for item in ['TW', 'CN', 'AL', 'CA']:
+            if item in text.upper():
+                region = item
+                break
+        message = crawl_msg(region)
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text="您好，有什么可以帮助您的吗？ ^_^ "))
+            TextSendMessage(text=message))
         return
-    # if event.message.text == "你好":
-    #     working_status = True
-    #     line_bot_api.reply_message(
-    #         event.reply_token,
-    #         TextSendMessage(text="您好，有什么可以帮助您的吗？ ^_^ "))
-    #     return
-    #
-    # if event.message.text == "再见":
-    #     working_status = False
-    #     line_bot_api.reply_message(
-    #         event.reply_token,
-    #         TextSendMessage(text="好的，我乖乖閉嘴 > <，如果想要我繼續說話，請跟我說 「說話」 > <"))
-    #     return
-    #
-    # if working_status:
-    #     line_bot_api.reply_message(
-    #         event.reply_token,
-    #         TextSendMessage(text="test test"))
 
 
 def parse_data(data):
