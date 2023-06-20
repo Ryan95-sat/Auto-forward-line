@@ -4,7 +4,7 @@ import os
 CRAWLER_MYSQL_CONF = {
     'host': '127.0.0.1',
     'user': os.getenv('DEV_USER', 'admin'),
-    'password': os.getenv('PASSWORD', '123456'),
+    'password': os.getenv('PASSWORD', 'Zr012.com'),
     'db': 'data',
     'port': 3306
 }
